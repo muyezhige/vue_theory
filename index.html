@@ -5,12 +5,12 @@
   <title>Two-way data-binding</title>
 </head>
 <body>
-  
   <div id="app">
     <input type="text" v-model="text">
     {{ text }}
   </div>
   <script>
+    // 设置访问器属性
     function defineReactive (obj, key, val) {
       var _pub = new Publish();
 
@@ -30,6 +30,7 @@
       });
     }
 
+    // 文档节点
     function nodeToFragment (node, vm) {
       var flag = document.createDocumentFragment();
       var child;
@@ -42,38 +43,38 @@
     }
     
     function compile (node, vm) {
-      var reg = /\{\{(.*)\}\}/;
-      // 节点类型为元素
-      if (node.nodeType === 1) {
-        var attr = node.attributes;
-        // 解析属性
-        for (var i = 0; i < attr.length; i++) {
-          if (attr[i].nodeName == 'v-model') {
-            var name = attr[i].nodeValue; // 获取v-model绑定的属性名
-            node.addEventListener('input', function (e) {
-              // 给相应的data属性赋值，进而触发该属性的set方法
-              vm[name] = e.target.value;
-            });
-            node.value = vm[name]; // 将data的值赋给该node
-            node.removeAttribute('v-model');
-          }
-        };
-        // 创建订阅者实例
-        new Watcher(vm, node, name, 'input');
-      }
-      // 节点类型为text
-      if (node.nodeType === 3) {
-        if (reg.test(node.nodeValue)) {
-          var name = RegExp.$1; // 获取匹配到的字符串
-          name = name.trim();
+        var reg = /\{\{(.*)\}\}/;
+        // 节点类型为元素
+        if (node.nodeType === 1) {
+          var attr = node.attributes;
+          // 解析属性
+          for (var i = 0; i < attr.length; i++) {
+              if (attr[i].nodeName == 'v-model') {
+                var name = attr[i].nodeValue; // 获取v-model的属性值
+                // 事件监听具有v-model属性值的元素节点 （input）
+                node.addEventListener('input', function (e) {
+                  // 给相应的data属性赋值，进而触发该属性的set方法
+                  vm[name] = e.target.value;
+                });
+                node.value = vm[name]; // 将data的值赋给该node
+                node.removeAttribute('v-model');
+              }
+          };
           // 创建订阅者实例
-          new Watcher(vm, node, name, 'text');
+          new Watcher(vm, node, name, 'input');
         }
-      }
+        // 节点类型为text
+        if (node.nodeType === 3) {
+            if (reg.test(node.nodeValue)) {
+              var name = RegExp.$1; // 获取匹配到的字符串
+              name = name.trim();
+              // 创建订阅者实例
+              new Watcher(vm, node, name, 'text');
+            }
+        }
     }
 
     // ===========订阅者/观察者==============
-    // 触发相应属性的get方法
     function Watcher (vm, node, name, nodeType) {
       Publish.target = this;
       this.name = name;
@@ -109,6 +110,7 @@
     }
     
     Publish.prototype = {
+      constrcutor: "Publish",
     	// 添加订阅者
       addSub: function(sub) {
         this.subs.push(sub);
@@ -124,21 +126,21 @@
     function Vue (options) {
     	var vm = this;
      	vm.data = options.data;
-        // 将data 中的 text 设置为 vm 的访问器属性, 给vm.text 赋值, 就会触发 set 方法
+      //将data中的text设置为vm的访问器属性, 给vm.text 赋值, 就会触发set方法
 	    Object.keys(vm.data).forEach(function (key) {
-	  		defineReactive(vm, key, vm.data[key]);
+	  	    defineReactive(vm, key, vm.data[key]);
 	    });
 
-        var $app = document.getElementById(options.el);
-        var dom = nodeToFragment($app, this);
-        // 编译完成后，将dom返回到app中
-        $app.appendChild(dom);
+      var $app = document.getElementById(options.el),
+          dom = nodeToFragment($app, this);
+      // 编译完成后，将dom返回到app中
+      $app.appendChild(dom);
     }
     var vm = new Vue({
-       el: 'app',
-       data: {
-         text: 'hello world'
-       }
+        el: 'app',
+        data: {
+            text: 'hello world'
+        }
     });
   </script>
 </body>
